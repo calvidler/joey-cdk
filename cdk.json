@@ -50,6 +50,18 @@
     "@aws-cdk/aws-kms:aliasNameRef": true,
     "@aws-cdk/aws-autoscaling:generateLaunchTemplateInsteadOfLaunchConfig": true,
     "@aws-cdk/core:includePrefixInUniqueNameGeneration": true,
-    "@aws-cdk/aws-opensearchservice:enableOpensearchMultiAzWithStandby": true
+    "@aws-cdk/aws-opensearchservice:enableOpensearchMultiAzWithStandby": true,
+    "globals": {
+      "appName": "joey-cdk",
+      "region": "ap-southeast-2"
+    },
+    "environments": [
+      {
+        "environment": "develop",
+        "branchName": "develop",
+        "accountNumber": "654377670009"
+
+      }
+    ]
   }
 }

@@ -1,28 +1,44 @@
 #!/usr/bin/env python3
 import os
-
 import aws_cdk as cdk
-
 from joey_cdk.joey_cdk_stack import JoeyCdkStack
+import git
 
 
-app = cdk.App()
-JoeyCdkStack(app, "JoeyCdkStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
+def get_context(app: cdk.App) -> dict:
+    git_branch = git.Repo(os.getcwd()).active_branch.name
+    print(f'Using git branch: {git_branch}')
+    print(app.node.try_get_context('defaultEnvironment'))
+    if app.node.try_get_context('environments') is None:
+        environment = git_branch
+    else:
+        environment = next((e for e in app.node.try_get_context(
+            'environments') if e['branchName'] == git_branch), None)
+    if environment is None:
+        raise Exception(f'No environment found for branch {git_branch}')
+    globals = app.node.try_get_context('globals')
+    return {**globals, **environment}
 
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
 
-    #env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
 
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
+def create_joey_stack():
+    app = cdk.App()
 
-    #env=cdk.Environment(account='123456789012', region='us-east-1'),
+    context = get_context(app)
+    tags = {
+        "environment": context['environment'],
+    }
+    app_id = f"JoeyCdkStack-{tags['environment']}"
 
-    # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
+    JoeyCdkStack(
+        app, 
+        app_id,
+        env=cdk.Environment(
+            account=context['accountNumber'], 
+            region=context['region']),
+        tags=tags,
     )
 
-app.synth()
+    app.synth()
+
+create_joey_stack()
